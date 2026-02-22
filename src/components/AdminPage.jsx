@@ -59,7 +59,7 @@ function AdminPage({ onNotification }) {
 
         setSendingId(request.id);
 
-        const message = `🎬 Your movie "${request.name} (${request.year})" is ready!\n\n📥 Download Link: ${link}\n\nQuality: ${request.quality}\nLanguage: ${request.language}\n\nEnjoy! 🍿`;
+        const message = `🎬 Your movie *${request.name} (${request.year})* is ready!\n\n🌐 Language: ${request.language}\n📀 Quality: ${request.quality}\n\n📥 Download Link:\n${link}\n\nEnjoy! 🍿`;
 
         try {
             const res = await fetch('/api/whatsapp/send', {
@@ -220,10 +220,10 @@ function AdminPage({ onNotification }) {
                                     </div>
                                     <span
                                         className={`status-badge ${request.status === 'completed'
-                                                ? 'status-completed'
-                                                : request.status === 'processing'
-                                                    ? 'status-processing'
-                                                    : 'status-incomplete'
+                                            ? 'status-completed'
+                                            : request.status === 'processing'
+                                                ? 'status-processing'
+                                                : 'status-incomplete'
                                             }`}
                                     >
                                         {request.status === 'completed'
