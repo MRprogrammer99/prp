@@ -5,6 +5,7 @@ import cors from 'cors';
 import path from 'path';
 import { fileURLToPath } from 'url';
 import qrcode from 'qrcode-terminal';
+import { useMongoAuthState } from './mongoAuthState.js';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -23,20 +24,34 @@ let sock = null;
 let isConnected = false;
 let qrCodeData = null;
 
+// ─── Auth State Setup ───
+async function getAuthState() {
+    const mongoUrl = process.env.MONGO_URL;
+
+    if (mongoUrl) {
+        // Use MongoDB for persistent auth (Render deployment)
+        console.log('📦 Using MongoDB for persistent WhatsApp auth');
+        return await useMongoAuthState(mongoUrl);
+    } else {
+        // Use filesystem for local development
+        console.log('📁 Using filesystem for WhatsApp auth (local mode)');
+        const authPath = path.join(__dirname, 'whatsapp_auth');
+        const { state, saveCreds } = await useMultiFileAuthState(authPath);
+        return { state, saveCreds };
+    }
+}
+
 // ─── Connect to WhatsApp ───
 async function connectWhatsApp() {
-    const authPath = path.join(__dirname, 'whatsapp_auth');
-    const { state, saveCreds } = await useMultiFileAuthState(authPath);
-
-    const logger = pino({ level: 'warn' }); // show warnings to debug
+    const { state, saveCreds } = await getAuthState();
+    const logger = pino({ level: 'silent' });
 
     let version;
     try {
         const result = await fetchLatestWaWebVersion({});
         version = result.version;
-        console.log(`📌 Using WA version: ${version}`);
+        console.log(`📌 WA version: ${version}`);
     } catch (e) {
-        console.log('⚠️  Could not fetch WA version, using default');
         version = [2, 3000, 1015901307];
     }
 
@@ -55,34 +70,24 @@ async function connectWhatsApp() {
     sock.ev.on('connection.update', async (update) => {
         const { connection, lastDisconnect, qr } = update;
 
-        console.log('📋 Connection update:', JSON.stringify({ connection, hasQR: !!qr, lastDisconnect: lastDisconnect?.error?.message }));
-
-        // QR code received — display in terminal
         if (qr) {
             qrCodeData = qr;
             console.log('\n╔════════════════════════════════════════╗');
             console.log('║   📱  SCAN THIS QR WITH WHATSAPP      ║');
             console.log('╚════════════════════════════════════════╝\n');
             qrcode.generate(qr, { small: true });
-            console.log('\nWhatsApp Business → Settings → Linked Devices → Link a Device\n');
+            console.log('WhatsApp Business → Settings → Linked Devices → Link a Device\n');
         }
 
-        // Connection closed
         if (connection === 'close') {
             isConnected = false;
             qrCodeData = null;
-
             const statusCode = lastDisconnect?.error?.output?.statusCode;
             const msg = lastDisconnect?.error?.message || 'unknown';
             console.log(`⚠️  Disconnected: code=${statusCode}, reason="${msg}"`);
 
             if (statusCode === DisconnectReason.loggedOut) {
-                console.log('❌ Logged out. Clearing auth...');
-                const fs = await import('fs');
-                if (fs.existsSync(authPath)) {
-                    fs.rmSync(authPath, { recursive: true, force: true });
-                }
-                console.log('🔄 Restarting in 5s...');
+                console.log('❌ Logged out. Restarting...');
                 setTimeout(connectWhatsApp, 5000);
             } else {
                 console.log('🔄 Reconnecting in 5s...');
@@ -90,7 +95,6 @@ async function connectWhatsApp() {
             }
         }
 
-        // Connected!
         if (connection === 'open') {
             isConnected = true;
             qrCodeData = null;
