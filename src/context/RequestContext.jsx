@@ -1,70 +1,82 @@
-import { createContext, useContext, useReducer, useEffect } from 'react';
+import { createContext, useContext, useState, useEffect } from 'react';
 
 const RequestContext = createContext();
 
-const STORAGE_KEY = 'movie_requests';
-
-function loadRequests() {
-  try {
-    const stored = localStorage.getItem(STORAGE_KEY);
-    if (stored) {
-      return JSON.parse(stored);
-    }
-  } catch (e) {
-    console.error('Failed to load requests from localStorage:', e);
-  }
-  return [];
-}
-
-function requestReducer(state, action) {
-  switch (action.type) {
-    case 'ADD_REQUEST':
-      return [...state, action.payload];
-
-    case 'UPDATE_STATUS':
-      return state.map((req) =>
-        req.id === action.payload.id
-          ? { ...req, status: action.payload.status }
-          : req
-      );
-
-    case 'DELETE_REQUEST':
-      return state.filter((req) => req.id !== action.payload);
-
-    default:
-      return state;
-  }
-}
-
 export function RequestProvider({ children }) {
-  const [requests, dispatch] = useReducer(requestReducer, null, loadRequests);
+  const [requests, setRequests] = useState([]);
+  const [loading, setLoading] = useState(true);
 
+  // Initial fetch
   useEffect(() => {
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(requests));
-  }, [requests]);
+    fetchRequests();
+  }, []);
 
-  const addRequest = (request) => {
-    const newRequest = {
-      ...request,
-      id: Date.now(),
-      status: 'processing',
-      date: new Date().toLocaleDateString('en-GB'),
-    };
-    dispatch({ type: 'ADD_REQUEST', payload: newRequest });
-    return newRequest;
+  const fetchRequests = async () => {
+    try {
+      setLoading(true);
+      const res = await fetch('/api/requests');
+      const data = await res.json();
+      setRequests(data);
+    } catch (e) {
+      console.error('Failed to fetch requests:', e);
+    } finally {
+      setLoading(false);
+    }
   };
 
-  const updateStatus = (id, status) => {
-    dispatch({ type: 'UPDATE_STATUS', payload: { id, status } });
+  const addRequest = async (request) => {
+    try {
+      const res = await fetch('/api/requests', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(request),
+      });
+      const newRequest = await res.json();
+      setRequests((prev) => [newRequest, ...prev]);
+      return newRequest;
+    } catch (e) {
+      console.error('Failed to add request:', e);
+    }
   };
 
-  const deleteRequest = (id) => {
-    dispatch({ type: 'DELETE_REQUEST', payload: id });
+  const updateStatus = async (id, updates) => {
+    try {
+      await fetch(`/api/requests/${id}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(updates),
+      });
+
+      setRequests((prev) =>
+        prev.map((req) => (req.id === id ? { ...req, ...updates } : req))
+      );
+    } catch (e) {
+      console.error('Failed to update request:', e);
+    }
+  };
+
+  const trackRequest = async (phone) => {
+    try {
+      const res = await fetch(`/api/requests/track/${encodeURIComponent(phone)}`);
+      return await res.json();
+    } catch (e) {
+      console.error('Failed to track request:', e);
+      return [];
+    }
+  };
+
+  const deleteRequest = async (id) => {
+    try {
+      await fetch(`/api/requests/${id}`, { method: 'DELETE' });
+      setRequests((prev) => prev.filter((req) => req.id !== id));
+    } catch (e) {
+      console.error('Failed to delete request:', e);
+    }
   };
 
   return (
     <RequestContext.Provider
-      value={{ requests, addRequest, updateStatus, deleteRequest }}
+      value={{ requests, loading, addRequest, updateStatus, deleteRequest, trackRequest, refresh: fetchRequests }}
     >
       {children}
     </RequestContext.Provider>

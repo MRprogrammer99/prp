@@ -4,21 +4,15 @@ import Header from './components/Header';
 import RequestSection from './components/RequestSection';
 import PreviousRequests from './components/PreviousRequests';
 import DisclaimerModal from './components/DisclaimerModal';
-import RequestFormModal from './components/RequestFormModal';
+import TrackRequest from './components/TrackRequest';
 import AdminPage from './components/AdminPage';
 import Notification from './components/Notification';
-
-// Clear old preset/sample data from localStorage on first load
-const CLEARED_KEY = 'presets_cleared_v2';
-if (!localStorage.getItem(CLEARED_KEY)) {
-    localStorage.removeItem('movie_requests');
-    localStorage.setItem(CLEARED_KEY, 'true');
-}
 
 function App() {
     const [currentPage, setCurrentPage] = useState('home');
     const [showDisclaimer, setShowDisclaimer] = useState(false);
     const [showRequestForm, setShowRequestForm] = useState(false);
+    const [showTrack, setShowTrack] = useState(false);
     const [notification, setNotification] = useState({ message: '', visible: false });
 
     // Simple hash-based routing
@@ -58,7 +52,10 @@ function App() {
                     <div className="container">
                         <Header />
                         <div className="main-content">
-                            <RequestSection onRequestClick={handleRequestClick} />
+                            <RequestSection
+                                onRequestClick={handleRequestClick}
+                                onTrackClick={() => setShowTrack(true)}
+                            />
                             <PreviousRequests />
                         </div>
                     </div>
@@ -77,6 +74,11 @@ function App() {
                         isOpen={showRequestForm}
                         onClose={() => setShowRequestForm(false)}
                         onSuccess={showNotification}
+                    />
+
+                    <TrackRequest
+                        isOpen={showTrack}
+                        onClose={() => setShowTrack(false)}
                     />
 
                     {/* Admin link — fixed bottom left */}

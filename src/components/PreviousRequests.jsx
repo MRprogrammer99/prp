@@ -13,7 +13,7 @@ function getStatusBadge(status) {
 }
 
 function PreviousRequests() {
-    const { requests } = useRequests();
+    const { requests, loading } = useRequests();
 
     return (
         <section className="glass-card previous-requests">
@@ -21,7 +21,12 @@ function PreviousRequests() {
                 <i className="fas fa-history"></i> Previous Requests
             </h2>
 
-            {requests.length === 0 ? (
+            {loading ? (
+                <div className="empty-state">
+                    <i className="fas fa-spinner fa-spin"></i>
+                    <p>Loading requests...</p>
+                </div>
+            ) : requests.length === 0 ? (
                 <div className="empty-state">
                     <i className="fas fa-inbox"></i>
                     <p>No requests yet. Click "Request a Movie" to get started!</p>

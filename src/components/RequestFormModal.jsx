@@ -25,35 +25,44 @@ function RequestFormModal({ isOpen, onClose, onSuccess }) {
         whatsapp: '',
     });
 
+    const [isSubmitting, setIsSubmitting] = useState(false);
+
     if (!isOpen) return null;
 
     const handleChange = (e) => {
         setFormData({ ...formData, [e.target.name]: e.target.value });
     };
 
-    const handleSubmit = (e) => {
+    const handleSubmit = async (e) => {
         e.preventDefault();
+        setIsSubmitting(true);
 
-        addRequest({
-            requesterName: formData.requesterName,
-            name: formData.name,
-            year: formData.year,
-            language: formData.language,
-            quality: formData.quality,
-            whatsapp: formData.whatsapp,
-        });
+        try {
+            await addRequest({
+                requesterName: formData.requesterName,
+                name: formData.name,
+                year: formData.year,
+                language: formData.language,
+                quality: formData.quality,
+                whatsapp: formData.whatsapp,
+            });
 
-        setFormData({
-            requesterName: '',
-            name: '',
-            year: '',
-            language: '',
-            quality: '480p',
-            whatsapp: '',
-        });
+            setFormData({
+                requesterName: '',
+                name: '',
+                year: '',
+                language: '',
+                quality: '480p',
+                whatsapp: '',
+            });
 
-        onClose();
-        onSuccess('Your movie request has been submitted successfully! 🎬');
+            onClose();
+            onSuccess('Your movie request has been submitted successfully! 🎬');
+        } catch (error) {
+            console.error('Submission failed:', error);
+        } finally {
+            setIsSubmitting(false);
+        }
     };
 
     return (
@@ -173,8 +182,16 @@ function RequestFormModal({ isOpen, onClose, onSuccess }) {
                         />
                     </div>
 
-                    <button type="submit" className="submit-btn">
-                        <i className="fas fa-paper-plane"></i> Submit Request
+                    <button type="submit" className="submit-btn" disabled={isSubmitting}>
+                        {isSubmitting ? (
+                            <>
+                                <i className="fas fa-spinner fa-spin"></i> Submitting...
+                            </>
+                        ) : (
+                            <>
+                                <i className="fas fa-paper-plane"></i> Submit Request
+                            </>
+                        )}
                     </button>
                 </form>
             </div>

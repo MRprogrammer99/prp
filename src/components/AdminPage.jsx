@@ -74,7 +74,7 @@ function AdminPage({ onNotification }) {
             const data = await res.json();
 
             if (res.ok && data.success) {
-                updateStatus(request.id, 'completed');
+                await updateStatus(request.id, { status: 'completed', link: link });
                 setLinks({ ...links, [request.id]: '' });
                 onNotification(`✅ Link sent via WhatsApp to ${request.whatsapp}`);
             } else {
@@ -87,8 +87,8 @@ function AdminPage({ onNotification }) {
         }
     };
 
-    const handleStatusChange = (id, status) => {
-        updateStatus(id, status);
+    const handleStatusChange = async (id, status) => {
+        await updateStatus(id, { status });
         onNotification('Status updated successfully');
     };
 

@@ -106,10 +106,105 @@ async function connectWhatsApp() {
     sock.ev.on('creds.update', saveCreds);
 }
 
+import { MongoClient, ObjectId } from 'mongodb';
+
+// ─── MongoDB Request Setup ───
+let requestsCollection = null;
+async function setupRequestsDB() {
+    const mongoUrl = process.env.MONGO_URL;
+    if (!mongoUrl) return;
+    try {
+        const client = new MongoClient(mongoUrl);
+        await client.connect();
+        const db = client.db('whatsapp_bot');
+        requestsCollection = db.collection('movie_requests');
+        console.log('📦 Connected to MongoDB for requests storage');
+    } catch (error) {
+        console.error('❌ Failed to connect to MongoDB for requests:', error.message);
+    }
+}
+setupRequestsDB();
+
 // ─── API Routes ───
 
 app.get('/api/health', (req, res) => {
     res.json({ status: 'ok', whatsapp: isConnected });
+});
+
+// Fetch all requests (for admin)
+app.get('/api/requests', async (req, res) => {
+    if (!requestsCollection) return res.json([]);
+    try {
+        const requests = await requestsCollection.find({}).sort({ date: -1 }).toArray();
+        res.json(requests.map(r => ({ ...r, id: r._id.toString() })));
+    } catch (error) {
+        res.status(500).json({ error: error.message });
+    }
+});
+
+// Create new request
+app.post('/api/requests', async (req, res) => {
+    if (!requestsCollection) return res.status(503).json({ error: 'DB not connected' });
+    try {
+        const request = {
+            ...req.body,
+            status: 'requested',
+            link: '',
+            date: new Date().toLocaleDateString(),
+            timestamp: new Date().getTime()
+        };
+        const result = await requestsCollection.insertOne(request);
+        res.json({ ...request, id: result.insertedId.toString() });
+    } catch (error) {
+        res.status(500).json({ error: error.message });
+    }
+});
+
+// Update request status/link
+app.patch('/api/requests/:id', async (req, res) => {
+    if (!requestsCollection) return res.status(503).json({ error: 'DB not connected' });
+    try {
+        const { id } = req.params;
+        const updates = req.body;
+        await requestsCollection.updateOne(
+            { _id: new ObjectId(id) },
+            { $set: updates }
+        );
+        res.json({ success: true });
+    } catch (error) {
+        res.status(500).json({ error: error.message });
+    }
+});
+
+// Track request by phone
+app.get('/api/requests/track/:phone', async (req, res) => {
+    if (!requestsCollection) return res.status(503).json({ error: 'DB not connected' });
+    try {
+        const { phone } = req.params;
+        // Clean phone for searching
+        const cleanPhone = phone.replace(/[^0-9]/g, '');
+        const results = await requestsCollection.find({
+            $or: [
+                { whatsapp: phone },
+                { whatsapp: cleanPhone }
+            ]
+        }).sort({ date: -1 }).toArray();
+        res.json(results.map(r => ({ ...r, id: r._id.toString() })));
+    } catch (error) {
+        res.status(500).json({ error: error.message });
+    }
+});
+
+// Delete request
+app.delete('/api/requests/:id', async (req, res) => {
+    if (!requestsCollection) return res.status(503).json({ error: 'DB not connected' });
+    try {
+        const { id } = req.params;
+        await requestsCollection.deleteOne({ _id: new ObjectId(id) });
+        res.json({ success: true });
+    } catch (error) {
+        res.status(500).json({ error: error.message });
+    }
 });
 
 app.get('/api/whatsapp/status', (req, res) => {
