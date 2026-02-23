@@ -1,6 +1,28 @@
-import { MongoClient } from 'mongodb';
+import { MongoClient, Binary } from 'mongodb';
 import { proto } from '@whiskeysockets/baileys';
 import { initAuthCreds } from '@whiskeysockets/baileys';
+
+/**
+ * Recursively convert MongoDB Binary objects back to Node.js Buffers.
+ */
+function fixBinary(data) {
+    if (data instanceof Binary) {
+        return data.buffer;
+    }
+    if (Array.isArray(data)) {
+        return data.map(fixBinary);
+    }
+    if (typeof data === 'object' && data !== null) {
+        // Handle specifically for auth state where value might be Binary
+        if (data._bsontype === 'Binary') {
+            return data.buffer;
+        }
+        for (const key in data) {
+            data[key] = fixBinary(data[key]);
+        }
+    }
+    return data;
+}
 
 /**
  * MongoDB-based auth state for Baileys.
@@ -17,7 +39,8 @@ export async function useMongoAuthState(mongoUrl, dbName = 'whatsapp_bot') {
     // Read data from MongoDB
     const readData = async (id) => {
         const doc = await authCollection.findOne({ _id: id });
-        return doc?.value || null;
+        if (!doc) return null;
+        return fixBinary(doc.value);
     };
 
     // Write data to MongoDB
@@ -39,6 +62,14 @@ export async function useMongoAuthState(mongoUrl, dbName = 'whatsapp_bot') {
     if (!creds) {
         creds = initAuthCreds();
     }
+
+    // Keep service awake ping (Render free tier)
+    const selfPing = setInterval(async () => {
+        try {
+            // No-op query to keep DB and memory slightly active
+            await authCollection.findOne({ _id: 'ping' });
+        } catch (e) { }
+    }, 600000); // 10 mins
 
     return {
         state: {
@@ -82,6 +113,7 @@ export async function useMongoAuthState(mongoUrl, dbName = 'whatsapp_bot') {
             console.log('🗑️ Auth data cleared from MongoDB');
         },
         close: async () => {
+            clearInterval(selfPing);
             await client.close();
         },
     };

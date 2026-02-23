@@ -157,4 +157,15 @@ app.listen(PORT, () => {
     console.log(`\n🚀 Server running on http://localhost:${PORT}`);
     console.log('📡 Connecting to WhatsApp...\n');
     connectWhatsApp();
+
+    // Self-ping to keep Render awake (free tier sleeps after 15 mins)
+    const RENDER_URL = process.env.RENDER_EXTERNAL_URL || process.env.PUBLIC_URL;
+    if (RENDER_URL) {
+        console.log(`📡 Self-ping active for: ${RENDER_URL}`);
+        setInterval(() => {
+            fetch(`${RENDER_URL}/api/health`)
+                .then(() => console.log('💓 Self-ping successful'))
+                .catch(err => console.error('💔 Self-ping failed:', err.message));
+        }, 840000); // 14 minutes
+    }
 });
