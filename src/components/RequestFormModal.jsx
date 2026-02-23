@@ -25,6 +25,7 @@ function RequestFormModal({ isOpen, onClose, onSuccess }) {
     });
 
     const [isSubmitting, setIsSubmitting] = useState(false);
+    const [showSuccess, setShowSuccess] = useState(false);
 
     if (!isOpen) return null;
 
@@ -53,14 +54,42 @@ function RequestFormModal({ isOpen, onClose, onSuccess }) {
                 quality: '480p',
             });
 
-            onClose();
-            onSuccess('Your movie request has been submitted successfully! 🎬');
+            setShowSuccess(true);
         } catch (error) {
             console.error('Submission failed:', error);
         } finally {
             setIsSubmitting(false);
         }
     };
+
+    const handleSuccessClose = () => {
+        setShowSuccess(false);
+        onClose();
+    };
+
+    // Show success popup
+    if (showSuccess) {
+        return (
+            <div className="modal-overlay" onClick={handleSuccessClose}>
+                <div className="modal-content success-popup" onClick={(e) => e.stopPropagation()}>
+                    <div className="success-icon">
+                        <i className="fas fa-check-circle"></i>
+                    </div>
+                    <h2 className="success-title">Request Submitted! 🎬</h2>
+                    <p className="success-message">
+                        Please come back and visit the website again. The admin will
+                        update your requested download link shortly!
+                    </p>
+                    <p className="success-hint">
+                        <i className="fas fa-clock"></i> Check the homepage for your download link
+                    </p>
+                    <button className="submit-btn" onClick={handleSuccessClose}>
+                        <i className="fas fa-thumbs-up"></i> Got it!
+                    </button>
+                </div>
+            </div>
+        );
+    }
 
     return (
         <div className="modal-overlay" onClick={onClose}>

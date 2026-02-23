@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useRequests } from '../context/RequestContext';
 
 const ADMIN_PASSWORD = 'Abd123*';
@@ -10,6 +10,34 @@ function AdminPage({ onNotification }) {
     const [passwordError, setPasswordError] = useState('');
     const [links, setLinks] = useState({});
     const [completingId, setCompletingId] = useState(null);
+    const [termsText, setTermsText] = useState('');
+    const [termsSaving, setTermsSaving] = useState(false);
+
+    // Fetch T&C on mount
+    useEffect(() => {
+        if (isAuthenticated) {
+            fetch('/api/settings/terms')
+                .then(r => r.json())
+                .then(data => setTermsText(data.text || ''))
+                .catch(err => console.error('Failed to load terms:', err));
+        }
+    }, [isAuthenticated]);
+
+    const handleSaveTerms = async () => {
+        setTermsSaving(true);
+        try {
+            await fetch('/api/settings/terms', {
+                method: 'PUT',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ text: termsText }),
+            });
+            onNotification('✅ Terms & Conditions saved!');
+        } catch (error) {
+            onNotification('❌ Failed to save terms');
+        } finally {
+            setTermsSaving(false);
+        }
+    };
 
     const handleLogin = (e) => {
         e.preventDefault();
@@ -132,6 +160,35 @@ function AdminPage({ onNotification }) {
                         <div className="stat-number">{unavailableCount}</div>
                         <div className="stat-label">Not Available</div>
                     </div>
+                </div>
+
+                {/* Terms & Conditions Editor */}
+                <div className="glass-card" style={{ marginTop: '24px' }}>
+                    <h2 className="section-title">
+                        <i className="fas fa-file-alt"></i> Terms & Conditions
+                    </h2>
+                    <p style={{ fontSize: '0.85rem', color: 'rgba(255,255,255,0.5)', marginBottom: '14px' }}>
+                        Edit the terms shown to users before they request a movie. Use line breaks for paragraphs.
+                    </p>
+                    <textarea
+                        className="admin-textarea"
+                        value={termsText}
+                        onChange={(e) => setTermsText(e.target.value)}
+                        placeholder="Enter your terms and conditions text here..."
+                        rows={8}
+                    />
+                    <button
+                        className="admin-btn send-link-btn"
+                        onClick={handleSaveTerms}
+                        disabled={termsSaving}
+                        style={{ marginTop: '12px' }}
+                    >
+                        {termsSaving ? (
+                            <><i className="fas fa-spinner fa-spin"></i> Saving...</>
+                        ) : (
+                            <><i className="fas fa-save"></i> Save Terms</>
+                        )}
+                    </button>
                 </div>
 
                 {/* Requests List */}

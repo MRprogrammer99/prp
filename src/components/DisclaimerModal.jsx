@@ -1,7 +1,24 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 
 function DisclaimerModal({ isOpen, onClose, onProceed }) {
     const [accepted, setAccepted] = useState(false);
+    const [termsText, setTermsText] = useState('');
+    const [loading, setLoading] = useState(true);
+
+    useEffect(() => {
+        if (isOpen) {
+            setLoading(true);
+            fetch('/api/settings/terms')
+                .then(r => r.json())
+                .then(data => {
+                    setTermsText(data.text || 'Terms and conditions will be updated shortly.');
+                })
+                .catch(() => {
+                    setTermsText('Terms and conditions will be updated shortly.');
+                })
+                .finally(() => setLoading(false));
+        }
+    }, [isOpen]);
 
     if (!isOpen) return null;
 
@@ -17,6 +34,9 @@ function DisclaimerModal({ isOpen, onClose, onProceed }) {
         onClose();
     };
 
+    // Split text by newlines into paragraphs
+    const paragraphs = termsText.split('\n').filter(line => line.trim() !== '');
+
     return (
         <div className="modal-overlay" onClick={handleClose}>
             <div className="modal-content" onClick={(e) => e.stopPropagation()}>
@@ -29,30 +49,17 @@ function DisclaimerModal({ isOpen, onClose, onProceed }) {
                 </h2>
 
                 <div className="disclaimer-box">
-                    <p>
-                        This is where your disclaimer text will go. Please read and accept
-                        the terms before proceeding with your movie request.
-                    </p>
-                    <br />
-                    <p>
-                        By using this service, you agree to our terms and conditions. The
-                        movie request portal is provided for personal use only.
-                    </p>
-                    <br />
-                    <p>
-                        Once your request is completed, the download link will be available
-                        for 24 hours on the home page. Make sure to download within that time.
-                    </p>
-                    <br />
-                    <p>
-                        We do not guarantee the availability of all requested movies. Some
-                        movies may not be available due to various reasons.
-                    </p>
-                    <br />
-                    <p>
-                        The administrator reserves the right to deny any request without
-                        providing a reason.
-                    </p>
+                    {loading ? (
+                        <p style={{ textAlign: 'center', padding: '20px' }}>
+                            <i className="fas fa-spinner fa-spin"></i> Loading...
+                        </p>
+                    ) : (
+                        paragraphs.map((para, i) => (
+                            <p key={i} style={{ marginBottom: i < paragraphs.length - 1 ? '12px' : 0 }}>
+                                {para}
+                            </p>
+                        ))
+                    )}
                 </div>
 
                 <div className="checkbox-group" onClick={() => setAccepted(!accepted)}>

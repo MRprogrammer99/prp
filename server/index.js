@@ -18,6 +18,7 @@ if (process.env.NODE_ENV === 'production') {
 
 // ─── MongoDB Request Setup ───
 let requestsCollection = null;
+let settingsCollection = null;
 async function setupDB() {
     const mongoUrl = process.env.MONGO_URL;
     if (!mongoUrl) {
@@ -29,6 +30,7 @@ async function setupDB() {
         await client.connect();
         const db = client.db('whatsapp_bot');
         requestsCollection = db.collection('movie_requests');
+        settingsCollection = db.collection('settings');
         console.log('📦 Connected to MongoDB');
     } catch (error) {
         console.error('❌ Failed to connect to MongoDB:', error.message);
@@ -99,6 +101,33 @@ app.delete('/api/requests/:id', async (req, res) => {
     try {
         const { id } = req.params;
         await requestsCollection.deleteOne({ _id: new ObjectId(id) });
+        res.json({ success: true });
+    } catch (error) {
+        res.status(500).json({ error: error.message });
+    }
+});
+
+// ─── Settings: Terms & Conditions ───
+
+app.get('/api/settings/terms', async (req, res) => {
+    if (!settingsCollection) return res.json({ text: '' });
+    try {
+        const doc = await settingsCollection.findOne({ key: 'terms' });
+        res.json({ text: doc?.text || '' });
+    } catch (error) {
+        res.status(500).json({ error: error.message });
+    }
+});
+
+app.put('/api/settings/terms', async (req, res) => {
+    if (!settingsCollection) return res.status(503).json({ error: 'DB not connected' });
+    try {
+        const { text } = req.body;
+        await settingsCollection.updateOne(
+            { key: 'terms' },
+            { $set: { key: 'terms', text, updatedAt: new Date().getTime() } },
+            { upsert: true }
+        );
         res.json({ success: true });
     } catch (error) {
         res.status(500).json({ error: error.message });
