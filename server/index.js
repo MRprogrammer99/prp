@@ -31,19 +31,20 @@ async function getAuthState() {
     if (mongoUrl) {
         // Use MongoDB for persistent auth (Render deployment)
         console.log('📦 Using MongoDB for persistent WhatsApp auth');
-        return await useMongoAuthState(mongoUrl);
+        const auth = await useMongoAuthState(mongoUrl);
+        return auth; // includes { state, saveCreds, clearAll }
     } else {
         // Use filesystem for local development
         console.log('📁 Using filesystem for WhatsApp auth (local mode)');
         const authPath = path.join(__dirname, 'whatsapp_auth');
         const { state, saveCreds } = await useMultiFileAuthState(authPath);
-        return { state, saveCreds };
+        return { state, saveCreds, clearAll: null };
     }
 }
 
 // ─── Connect to WhatsApp ───
 async function connectWhatsApp() {
-    const { state, saveCreds } = await getAuthState();
+    const { state, saveCreds, clearAll } = await getAuthState();
     const logger = pino({ level: 'silent' });
 
     let version;
@@ -87,8 +88,10 @@ async function connectWhatsApp() {
             console.log(`⚠️  Disconnected: code=${statusCode}, reason="${msg}"`);
 
             if (statusCode === DisconnectReason.loggedOut) {
-                console.log('❌ Logged out. Restarting...');
-                setTimeout(connectWhatsApp, 5000);
+                console.log('❌ Logged out. Clearing stale auth...');
+                if (clearAll) await clearAll();
+                console.log('🔄 Will reconnect in 10s for fresh QR...');
+                setTimeout(connectWhatsApp, 10000);
             } else {
                 console.log('🔄 Reconnecting in 5s...');
                 setTimeout(connectWhatsApp, 5000);
