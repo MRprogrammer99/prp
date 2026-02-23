@@ -7,6 +7,7 @@ import DisclaimerModal from './components/DisclaimerModal';
 import TrackRequest from './components/TrackRequest';
 import AdminPage from './components/AdminPage';
 import Notification from './components/Notification';
+import RequestFormModal from './components/RequestFormModal';
 
 function App() {
     const [currentPage, setCurrentPage] = useState('home');
