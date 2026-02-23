@@ -6,14 +6,35 @@ export function RequestProvider({ children }) {
   const [requests, setRequests] = useState([]);
   const [loading, setLoading] = useState(true);
 
-  // Initial fetch
+  // Initial fetch + auto-polling every 15s to sync across devices
   useEffect(() => {
     fetchRequests();
+
+    // Poll every 15 seconds so requests from other devices show up
+    const interval = setInterval(() => {
+      if (!document.hidden) {
+        fetchRequests();
+      }
+    }, 15000);
+
+    // Refresh immediately when user switches back to this tab
+    const handleVisibility = () => {
+      if (!document.hidden) {
+        fetchRequests();
+      }
+    };
+    document.addEventListener('visibilitychange', handleVisibility);
+
+    return () => {
+      clearInterval(interval);
+      document.removeEventListener('visibilitychange', handleVisibility);
+    };
   }, []);
 
   const fetchRequests = async () => {
     try {
-      setLoading(true);
+      // Only show loading spinner on initial fetch, not on polls
+      if (requests.length === 0) setLoading(true);
       const res = await fetch('/api/requests');
       const data = await res.json();
       setRequests(data);
