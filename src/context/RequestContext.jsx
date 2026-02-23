@@ -10,14 +10,12 @@ export function RequestProvider({ children }) {
   useEffect(() => {
     fetchRequests();
 
-    // Poll every 15 seconds so requests from other devices show up
     const interval = setInterval(() => {
       if (!document.hidden) {
         fetchRequests();
       }
     }, 15000);
 
-    // Refresh immediately when user switches back to this tab
     const handleVisibility = () => {
       if (!document.hidden) {
         fetchRequests();
@@ -33,8 +31,6 @@ export function RequestProvider({ children }) {
 
   const fetchRequests = async () => {
     try {
-      // Only show loading spinner on initial fetch, not on polls
-      if (requests.length === 0) setLoading(true);
       const res = await fetch('/api/requests');
       const data = await res.json();
       setRequests(data);
@@ -62,27 +58,18 @@ export function RequestProvider({ children }) {
 
   const updateStatus = async (id, updates) => {
     try {
-      await fetch(`/api/requests/${id}`, {
+      const res = await fetch(`/api/requests/${id}`, {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(updates),
       });
+      const responseData = await res.json();
 
       setRequests((prev) =>
-        prev.map((req) => (req.id === id ? { ...req, ...updates } : req))
+        prev.map((req) => (req.id === id ? { ...req, ...updates, ...responseData } : req))
       );
     } catch (e) {
       console.error('Failed to update request:', e);
-    }
-  };
-
-  const trackRequest = async (phone) => {
-    try {
-      const res = await fetch(`/api/requests/track/${encodeURIComponent(phone)}`);
-      return await res.json();
-    } catch (e) {
-      console.error('Failed to track request:', e);
-      return [];
     }
   };
 
@@ -97,7 +84,7 @@ export function RequestProvider({ children }) {
 
   return (
     <RequestContext.Provider
-      value={{ requests, loading, addRequest, updateStatus, deleteRequest, trackRequest, refresh: fetchRequests }}
+      value={{ requests, loading, addRequest, updateStatus, deleteRequest, refresh: fetchRequests }}
     >
       {children}
     </RequestContext.Provider>

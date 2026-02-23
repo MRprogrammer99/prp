@@ -1,15 +1,32 @@
 import { useRequests } from '../context/RequestContext';
 
-function getStatusBadge(status) {
-    switch (status) {
-        case 'completed':
-            return { className: 'status-completed', label: 'Completed' };
-        case 'processing':
-            return { className: 'status-processing', label: 'Processing' };
-        case 'incomplete':
-        default:
-            return { className: 'status-incomplete', label: 'Not Available' };
+const TWENTY_FOUR_HOURS = 24 * 60 * 60 * 1000;
+
+function getRequestDisplay(request) {
+    if (request.status === 'completed' && request.completedAt) {
+        const elapsed = Date.now() - request.completedAt;
+        if (elapsed < TWENTY_FOUR_HOURS) {
+            // Within 24 hours — show Get Link button
+            const remaining = TWENTY_FOUR_HOURS - elapsed;
+            const hours = Math.floor(remaining / (60 * 60 * 1000));
+            const mins = Math.floor((remaining % (60 * 60 * 1000)) / (60 * 1000));
+            return {
+                type: 'link-available',
+                timeLeft: `${hours}h ${mins}m remaining`,
+                link: request.link,
+            };
+        } else {
+            // Past 24 hours
+            return { type: 'satisfied' };
+        }
     }
+
+    if (request.status === 'incomplete') {
+        return { type: 'unavailable' };
+    }
+
+    // Default: requested / pending
+    return { type: 'pending' };
 }
 
 function PreviousRequests() {
@@ -34,7 +51,7 @@ function PreviousRequests() {
             ) : (
                 <div className="request-list">
                     {requests.map((request, index) => {
-                        const badge = getStatusBadge(request.status);
+                        const display = getRequestDisplay(request);
                         return (
                             <div
                                 key={request.id}
@@ -55,9 +72,34 @@ function PreviousRequests() {
                                         {request.date}
                                     </div>
                                 </div>
-                                <span className={`status-badge ${badge.className}`}>
-                                    {badge.label}
-                                </span>
+
+                                {display.type === 'link-available' ? (
+                                    <div className="request-link-section">
+                                        <a
+                                            href={display.link}
+                                            target="_blank"
+                                            rel="noopener noreferrer"
+                                            className="get-link-btn"
+                                        >
+                                            <i className="fas fa-download"></i> Get Link
+                                        </a>
+                                        <span className="time-remaining">
+                                            <i className="fas fa-clock"></i> {display.timeLeft}
+                                        </span>
+                                    </div>
+                                ) : display.type === 'satisfied' ? (
+                                    <div className="request-satisfied">
+                                        <i className="fas fa-check-circle"></i> Request Completed • User Satisfied
+                                    </div>
+                                ) : display.type === 'unavailable' ? (
+                                    <span className="status-badge status-incomplete">
+                                        Not Available
+                                    </span>
+                                ) : (
+                                    <span className="status-badge status-processing">
+                                        Pending
+                                    </span>
+                                )}
                             </div>
                         );
                     })}

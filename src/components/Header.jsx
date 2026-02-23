@@ -5,7 +5,7 @@ function Header() {
                 <i className="fas fa-film"></i> Movie Request Portal
             </h1>
             <p className="subtitle">
-                Request your favorite movies and get download links via WhatsApp
+                Request your favorite movies and get download links
             </p>
         </header>
     );

@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import { useRequests } from '../context/RequestContext';
 
 const ADMIN_PASSWORD = 'Abd123*';
@@ -9,27 +9,7 @@ function AdminPage({ onNotification }) {
     const [password, setPassword] = useState('');
     const [passwordError, setPasswordError] = useState('');
     const [links, setLinks] = useState({});
-    const [waStatus, setWaStatus] = useState({ connected: false, hasQR: false });
-    const [sendingId, setSendingId] = useState(null);
-
-    // Check WhatsApp connection status periodically
-    useEffect(() => {
-        if (!isAuthenticated) return;
-
-        const checkStatus = async () => {
-            try {
-                const res = await fetch('/api/whatsapp/status');
-                const data = await res.json();
-                setWaStatus(data);
-            } catch {
-                setWaStatus({ connected: false, hasQR: false });
-            }
-        };
-
-        checkStatus();
-        const interval = setInterval(checkStatus, 5000);
-        return () => clearInterval(interval);
-    }, [isAuthenticated]);
+    const [completingId, setCompletingId] = useState(null);
 
     const handleLogin = (e) => {
         e.preventDefault();
@@ -45,45 +25,22 @@ function AdminPage({ onNotification }) {
         setLinks({ ...links, [id]: value });
     };
 
-    const handleSendLink = async (request) => {
+    const handleComplete = async (request) => {
         const link = links[request.id];
         if (!link) {
-            onNotification('⚠️ Please enter a download link first');
+            onNotification('⚠️ Please paste a download link first');
             return;
         }
 
-        if (!waStatus.connected) {
-            onNotification('❌ WhatsApp is not connected. Please scan the QR code in the server terminal first.');
-            return;
-        }
-
-        setSendingId(request.id);
-
-        const message = `🎬 Your movie *${request.name} (${request.year})* is ready!\n\n🌐 Language: ${request.language}\n📀 Quality: ${request.quality}\n\n📥 Download Link:\n${link}\n\nEnjoy! 🍿`;
-
+        setCompletingId(request.id);
         try {
-            const res = await fetch('/api/whatsapp/send', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({
-                    phone: request.whatsapp,
-                    message: message,
-                }),
-            });
-
-            const data = await res.json();
-
-            if (res.ok && data.success) {
-                await updateStatus(request.id, { status: 'completed', link: link });
-                setLinks({ ...links, [request.id]: '' });
-                onNotification(`✅ Link sent via WhatsApp to ${request.whatsapp}`);
-            } else {
-                onNotification(`❌ Failed: ${data.error}`);
-            }
+            await updateStatus(request.id, { status: 'completed', link: link });
+            setLinks({ ...links, [request.id]: '' });
+            onNotification(`✅ "${request.name}" marked as completed!`);
         } catch (error) {
-            onNotification(`❌ Network error: ${error.message}`);
+            onNotification(`❌ Failed: ${error.message}`);
         } finally {
-            setSendingId(null);
+            setCompletingId(null);
         }
     };
 
@@ -138,7 +95,7 @@ function AdminPage({ onNotification }) {
     }
 
     // ─── Admin Dashboard ───
-    const pendingCount = requests.filter((r) => r.status === 'processing').length;
+    const requestedCount = requests.filter((r) => r.status === 'requested').length;
     const completedCount = requests.filter((r) => r.status === 'completed').length;
     const unavailableCount = requests.filter((r) => r.status === 'incomplete').length;
 
@@ -154,17 +111,7 @@ function AdminPage({ onNotification }) {
                             <i className="fas fa-arrow-left"></i> Back to Portal
                         </a>
                     </div>
-                    <p className="subtitle">Manage movie requests and send download links</p>
-
-                    {/* WhatsApp Connection Status */}
-                    <div className="wa-status-bar">
-                        <span className={`wa-status-dot ${waStatus.connected ? 'connected' : 'disconnected'}`}></span>
-                        <span>
-                            {waStatus.connected
-                                ? 'WhatsApp Connected ✅'
-                                : 'WhatsApp Disconnected — Scan QR in server terminal'}
-                        </span>
-                    </div>
+                    <p className="subtitle">Manage movie requests and share download links</p>
                 </header>
 
                 {/* Stats */}
@@ -174,8 +121,8 @@ function AdminPage({ onNotification }) {
                         <div className="stat-label">Total Requests</div>
                     </div>
                     <div className="stat-card glass-card stat-pending">
-                        <div className="stat-number">{pendingCount}</div>
-                        <div className="stat-label">Processing</div>
+                        <div className="stat-number">{requestedCount}</div>
+                        <div className="stat-label">Pending</div>
                     </div>
                     <div className="stat-card glass-card stat-done">
                         <div className="stat-number">{completedCount}</div>
@@ -214,23 +161,20 @@ function AdminPage({ onNotification }) {
                                             )}
                                             {request.language} • {request.quality} • {request.date}
                                         </div>
-                                        <div className="admin-whatsapp">
-                                            <i className="fab fa-whatsapp"></i> {request.whatsapp}
-                                        </div>
                                     </div>
                                     <span
                                         className={`status-badge ${request.status === 'completed'
                                             ? 'status-completed'
-                                            : request.status === 'processing'
-                                                ? 'status-processing'
-                                                : 'status-incomplete'
+                                            : request.status === 'incomplete'
+                                                ? 'status-incomplete'
+                                                : 'status-processing'
                                             }`}
                                     >
                                         {request.status === 'completed'
                                             ? 'Completed'
-                                            : request.status === 'processing'
-                                                ? 'Processing'
-                                                : 'Not Available'}
+                                            : request.status === 'incomplete'
+                                                ? 'Not Available'
+                                                : 'Pending'}
                                     </span>
                                 </div>
 
@@ -246,16 +190,16 @@ function AdminPage({ onNotification }) {
                                     />
                                     <button
                                         className="admin-btn send-link-btn"
-                                        onClick={() => handleSendLink(request)}
-                                        disabled={sendingId === request.id}
+                                        onClick={() => handleComplete(request)}
+                                        disabled={completingId === request.id}
                                     >
-                                        {sendingId === request.id ? (
+                                        {completingId === request.id ? (
                                             <>
-                                                <i className="fas fa-spinner fa-spin"></i> Sending...
+                                                <i className="fas fa-spinner fa-spin"></i> Saving...
                                             </>
                                         ) : (
                                             <>
-                                                <i className="fab fa-whatsapp"></i> Send Link
+                                                <i className="fas fa-check-circle"></i> Complete
                                             </>
                                         )}
                                     </button>
@@ -266,7 +210,7 @@ function AdminPage({ onNotification }) {
                                             handleStatusChange(request.id, e.target.value)
                                         }
                                     >
-                                        <option value="processing">Processing</option>
+                                        <option value="requested">Pending</option>
                                         <option value="completed">Completed</option>
                                         <option value="incomplete">Not Available</option>
                                     </select>

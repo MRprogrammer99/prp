@@ -12,12 +12,9 @@
   },
   "dependencies": {
     "@vitejs/plugin-react": "^4.5.2",
-    "@whiskeysockets/baileys": "^6.7.16",
     "cors": "^2.8.5",
     "express": "^4.21.2",
     "mongodb": "^7.1.0",
-    "pino": "^9.6.0",
-    "qrcode-terminal": "^0.12.0",
     "react": "^19.0.0",
     "react-dom": "^19.0.0",
     "vite": "^7.3.1"

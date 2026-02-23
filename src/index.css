@@ -661,60 +661,65 @@ body {
   color: #fff;
 }
 
-/* WhatsApp Status Bar */
-.wa-status-bar {
+/* ===== Get Link Button & User Satisfied ===== */
+.request-link-section {
   display: flex;
-  align-items: center;
-  gap: 8px;
-  margin-top: 14px;
-  padding: 10px 16px;
-  background: rgba(0, 0, 0, 0.25);
-  border-radius: 8px;
-  font-size: 0.85rem;
-  color: rgba(255, 255, 255, 0.7);
-}
-
-.wa-status-dot {
-  width: 10px;
-  height: 10px;
-  border-radius: 50%;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 6px;
   flex-shrink: 0;
 }
 
-.wa-status-dot.connected {
-  background: #25D366;
-  box-shadow: 0 0 8px rgba(37, 211, 102, 0.6);
-  animation: pulse-green 2s ease-in-out infinite;
+.get-link-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 22px;
+  background: linear-gradient(135deg, #27ae60, #2ecc71);
+  color: white;
+  text-decoration: none;
+  border-radius: var(--radius-pill);
+  font-weight: 600;
+  font-size: 0.9rem;
+  transition: var(--transition);
+  box-shadow: 0 4px 15px rgba(39, 174, 96, 0.4);
+  white-space: nowrap;
 }
 
-.wa-status-dot.disconnected {
-  background: #e74c3c;
-  box-shadow: 0 0 8px rgba(231, 76, 60, 0.6);
-  animation: pulse-red 2s ease-in-out infinite;
+.get-link-btn:hover {
+  transform: translateY(-2px) scale(1.03);
+  box-shadow: 0 6px 25px rgba(39, 174, 96, 0.55);
 }
 
-@keyframes pulse-green {
-
-  0%,
-  100% {
-    opacity: 1;
-  }
-
-  50% {
-    opacity: 0.5;
-  }
+.get-link-btn:active {
+  transform: translateY(0) scale(0.98);
 }
 
-@keyframes pulse-red {
+.time-remaining {
+  font-size: 0.75rem;
+  color: rgba(255, 255, 255, 0.45);
+  display: flex;
+  align-items: center;
+  gap: 5px;
+}
 
-  0%,
-  100% {
-    opacity: 1;
-  }
+.time-remaining i {
+  color: rgba(255, 255, 255, 0.35);
+}
 
-  50% {
-    opacity: 0.4;
-  }
+.request-satisfied {
+  color: #2ecc71;
+  font-size: 0.88rem;
+  font-weight: 600;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 16px;
+  background: rgba(39, 174, 96, 0.1);
+  border-radius: var(--radius-pill);
+  border: 1px solid rgba(39, 174, 96, 0.2);
+  white-space: nowrap;
+  flex-shrink: 0;
 }
 
 /* Admin Stats */
@@ -855,16 +860,7 @@ body {
   color: #fff;
 }
 
-.admin-whatsapp {
-  font-size: 0.82rem;
-  color: rgba(255, 255, 255, 0.5);
-  margin-top: 4px;
-}
 
-.admin-whatsapp i {
-  color: #25D366;
-  margin-right: 4px;
-}
 
 /* Delete button */
 .delete-btn {
@@ -919,143 +915,7 @@ body {
   }
 }
 
-/* Track My Request Button */
-.track-btn-secondary {
-  flex: 1;
-  padding: 16px 24px;
-  background: rgba(255, 255, 255, 0.05);
-  color: white;
-  border: 1px solid rgba(255, 255, 255, 0.1);
-  border-radius: 12px;
-  font-size: 1.1rem;
-  font-weight: 600;
-  cursor: pointer;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 12px;
-  transition: var(--transition);
-  backdrop-filter: blur(5px);
-}
 
-.track-btn-secondary:hover {
-  background: rgba(255, 255, 255, 0.1);
-  border-color: rgba(255, 255, 255, 0.2);
-  transform: translateY(-2px);
-}
-
-/* Track Results */
-.track-modal {
-  max-height: 85vh;
-  overflow-y: auto;
-}
-
-.track-subtitle {
-  color: rgba(255, 255, 255, 0.6);
-  text-align: center;
-  margin-bottom: 20px;
-  font-size: 0.9rem;
-}
-
-.track-form {
-  display: flex;
-  gap: 10px;
-  margin-bottom: 24px;
-}
-
-.track-form input {
-  flex: 1;
-  padding: 12px 16px;
-  background: rgba(255, 255, 255, 0.1);
-  border: 1px solid rgba(255, 255, 255, 0.2);
-  border-radius: 8px;
-  color: white;
-  outline: none;
-}
-
-.track-form input:focus {
-  border-color: var(--primary);
-}
-
-.track-results {
-  margin-top: 20px;
-  min-height: 100px;
-}
-
-.track-info-tip,
-.track-no-results {
-  text-align: center;
-  padding: 30px;
-  color: rgba(255, 255, 255, 0.5);
-  background: rgba(255, 255, 255, 0.03);
-  border-radius: 12px;
-  border: 1px dashed rgba(255, 255, 255, 0.1);
-}
-
-.track-list {
-  display: flex;
-  flex-direction: column;
-  gap: 16px;
-}
-
-.track-item {
-  padding: 20px;
-  border: 1px solid rgba(255, 255, 255, 0.1);
-}
-
-.track-item-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  margin-bottom: 15px;
-}
-
-.track-link-box {
-  margin-top: 15px;
-  padding: 15px;
-  background: rgba(39, 174, 96, 0.1);
-  border-radius: 10px;
-  border: 1px solid rgba(39, 174, 96, 0.2);
-  text-align: center;
-}
-
-.track-link-box p {
-  color: #27ae60;
-  font-weight: 600;
-  margin-bottom: 12px;
-  font-size: 0.95rem;
-}
-
-.track-download-btn {
-  display: inline-flex;
-  align-items: center;
-  gap: 8px;
-  padding: 12px 24px;
-  background: linear-gradient(135deg, #27ae60, #2ecc71);
-  color: white;
-  text-decoration: none;
-  border-radius: 8px;
-  font-weight: 600;
-  transition: var(--transition);
-  box-shadow: 0 4px 15px rgba(39, 174, 96, 0.3);
-}
-
-.track-download-btn:hover {
-  transform: translateY(-2px);
-  box-shadow: 0 6px 20px rgba(39, 174, 96, 0.4);
-}
-
-.track-pending-msg {
-  color: rgba(255, 255, 255, 0.5);
-  font-size: 0.85rem;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 8px;
-  padding: 10px;
-  background: rgba(255, 255, 255, 0.05);
-  border-radius: 8px;
-}
 
 /* Scrollbar styling */
 ::-webkit-scrollbar {

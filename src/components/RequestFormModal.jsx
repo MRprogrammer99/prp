@@ -22,7 +22,6 @@ function RequestFormModal({ isOpen, onClose, onSuccess }) {
         year: '',
         language: '',
         quality: '480p',
-        whatsapp: '',
     });
 
     const [isSubmitting, setIsSubmitting] = useState(false);
@@ -44,7 +43,6 @@ function RequestFormModal({ isOpen, onClose, onSuccess }) {
                 year: formData.year,
                 language: formData.language,
                 quality: formData.quality,
-                whatsapp: formData.whatsapp,
             });
 
             setFormData({
@@ -53,7 +51,6 @@ function RequestFormModal({ isOpen, onClose, onSuccess }) {
                 year: '',
                 language: '',
                 quality: '480p',
-                whatsapp: '',
             });
 
             onClose();
@@ -165,21 +162,6 @@ function RequestFormModal({ isOpen, onClose, onSuccess }) {
                                 </div>
                             ))}
                         </div>
-                    </div>
-
-                    <div className="form-group">
-                        <label htmlFor="whatsappNumber">
-                            <i className="fab fa-whatsapp"></i> WhatsApp Number
-                        </label>
-                        <input
-                            type="tel"
-                            id="whatsappNumber"
-                            name="whatsapp"
-                            value={formData.whatsapp}
-                            onChange={handleChange}
-                            placeholder="+91 98765 43210"
-                            required
-                        />
                     </div>
 
                     <button type="submit" className="submit-btn" disabled={isSubmitting}>

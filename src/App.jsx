@@ -4,7 +4,6 @@ import Header from './components/Header';
 import RequestSection from './components/RequestSection';
 import PreviousRequests from './components/PreviousRequests';
 import DisclaimerModal from './components/DisclaimerModal';
-import TrackRequest from './components/TrackRequest';
 import AdminPage from './components/AdminPage';
 import Notification from './components/Notification';
 import RequestFormModal from './components/RequestFormModal';
@@ -13,7 +12,6 @@ function App() {
     const [currentPage, setCurrentPage] = useState('home');
     const [showDisclaimer, setShowDisclaimer] = useState(false);
     const [showRequestForm, setShowRequestForm] = useState(false);
-    const [showTrack, setShowTrack] = useState(false);
     const [notification, setNotification] = useState({ message: '', visible: false });
 
     // Simple hash-based routing
@@ -53,10 +51,7 @@ function App() {
                     <div className="container">
                         <Header />
                         <div className="main-content">
-                            <RequestSection
-                                onRequestClick={handleRequestClick}
-                                onTrackClick={() => setShowTrack(true)}
-                            />
+                            <RequestSection onRequestClick={handleRequestClick} />
                             <PreviousRequests />
                         </div>
                     </div>
@@ -75,11 +70,6 @@ function App() {
                         isOpen={showRequestForm}
                         onClose={() => setShowRequestForm(false)}
                         onSuccess={showNotification}
-                    />
-
-                    <TrackRequest
-                        isOpen={showTrack}
-                        onClose={() => setShowTrack(false)}
                     />
 
                     {/* Admin link — fixed bottom left */}

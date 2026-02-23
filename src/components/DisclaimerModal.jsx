@@ -29,7 +29,6 @@ function DisclaimerModal({ isOpen, onClose, onProceed }) {
                 </h2>
 
                 <div className="disclaimer-box">
-                    {/* Placeholder for disclaimer text — user will provide later */}
                     <p>
                         This is where your disclaimer text will go. Please read and accept
                         the terms before proceeding with your movie request.
@@ -41,8 +40,8 @@ function DisclaimerModal({ isOpen, onClose, onProceed }) {
                     </p>
                     <br />
                     <p>
-                        All movie links will be shared via WhatsApp to the number you
-                        provide. Please ensure your WhatsApp number is correct and active.
+                        Once your request is completed, the download link will be available
+                        for 24 hours on the home page. Make sure to download within that time.
                     </p>
                     <br />
                     <p>
