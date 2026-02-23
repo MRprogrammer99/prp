@@ -1,5 +1,5 @@
 import express from 'express';
-import { makeWASocket, DisconnectReason, useMultiFileAuthState, makeCacheableSignalKeyStore, fetchLatestWaWebVersion } from '@whiskeysockets/baileys';
+import { makeWASocket, DisconnectReason, useMultiFileAuthState, makeCacheableSignalKeyStore, fetchLatestWaWebVersion, Browsers } from '@whiskeysockets/baileys';
 import pino from 'pino';
 import cors from 'cors';
 import path from 'path';
@@ -63,9 +63,10 @@ async function connectWhatsApp() {
         },
         logger,
         version,
-        browser: ['MoviePortal', 'Chrome', '1.0'],
-        connectTimeoutMs: 60000,
-        qrTimeout: 60000,
+        browser: Browsers.ubuntu('Chrome'),
+        connectTimeoutMs: 120000,
+        qrTimeout: 120000,
+        defaultQueryTimeoutMs: 120000,
     });
 
     sock.ev.on('connection.update', async (update) => {
